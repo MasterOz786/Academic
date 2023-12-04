@@ -1,8 +1,8 @@
 
 #include <iostream>
 #include <fstream>
-#include <sstream>
 #include <algorithm>
+#include<sstream>
 #include <ctime>
 #include "GG.hpp"
 #include "Queue.hpp"
@@ -464,11 +464,17 @@ void GG<T>::storeCurrentProgress()
     Node<Vertex> *temp = this->adj_list.head;
     for (int i = 0; i < this->grid.rows * this->grid.cols; i++)
     {
-        file << temp->data.GetID() << " ";
+        file << temp->data.GetID();
+        if(temp->data.getNeighbours().head != nullptr){
+            file << " ";
+        }
         Node<Edge> *temp2 = temp->data.getNeighbours().head;
         while (temp2 != nullptr)
         {
-            file << temp2->data.dest << " ";
+            file << temp2->data.dest;
+            if(temp2->next != nullptr){
+                file << " ";
+            }
             temp2 = temp2->next;
         }
         file << '\n';
@@ -481,6 +487,11 @@ void GG<T>::storeCurrentProgress()
 template <typename T>
 void GG<T>::restoreCurrentProgress()
 {
+
+    delete this->adj_list.head;
+    this->adj_list.head = nullptr;
+    this->adj_list.printList();
+
     std::ifstream file;
     file.open("progress.txt");
     int rows, cols;
@@ -505,29 +516,44 @@ void GG<T>::restoreCurrentProgress()
                 dest = (i * this->grid.cols) + j;
         }
     }
+
     
-    // first integer is the vertex, rest are the edges
+    std::getline(file, line);  // Skipping a line
+
     std::getline(file, line);
+
+    // Deleting randomly generatrd list
+    delete adj_list.head;
+    delete adj_list.tail;
+    adj_list.head = nullptr;
+    adj_list.tail = nullptr;
+
+    // first integer is the vertex, rest are the edges
     while (file)
     {
+    
         std::stringstream ss(line);
         int vertex;
         ss >> vertex;
-
-        this->adj_list.insertAtEnd(Vertex(vertex));
+        this->adj_list.insertAtEnd(vertex);  // Inserting vertix in adjacency list
         int edge;
-        
-        // read the remaining integers in the line
+        bool inserted = false;
         while (ss >> edge)
         {
-            std::cout << edge << ' ';
-            this->adj_list.searchNode(vertex)->data.AddEdge(Edge(vertex, edge, '+'));
-        }
+            bool inserted = true;
+            this->adj_list.searchNode(vertex)->data.AddEdge(Edge(vertex, edge, '+')); // Inserting edge
 
+
+        }
+        if(!inserted){
+            this->adj_list.searchNode(vertex)->data.setType(' ');
+        }
         std::getline(file, line);
+        
     }
 
     file.close();
+
     SimulatePlayerCarMovement(source, dest);
 }
 

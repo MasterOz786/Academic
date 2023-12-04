@@ -110,6 +110,10 @@ public:
         return this->id;
     }
 
+    void setType(char type){
+        this->type = type;
+    }
+
     char GetType()
     {
         return this->type;
