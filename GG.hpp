@@ -16,8 +16,8 @@ public:
     GG(int r, int c);
     void PrintAdjacencyList();
     void Print();
-    int dijkstra(int source, int dest);
-    void simulateCarMovementFromSourceToDest();
+    int* dijkstra(int source, int dest);
+    void simulateCarMovementFromSourceToDest(int source, int dest);
 
 private:
     int vertices;
