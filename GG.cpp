@@ -6,6 +6,7 @@
 #include "GG.hpp"
 #include "Queue.hpp"
 #include <Windows.h>
+
 // Graph class implementation3
 template <typename T>
 GG<T>::GG()
@@ -27,8 +28,9 @@ bool GG<T>::validateStartPos(int x, int y)
 {
     HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
     SetConsoleTextAttribute(hConsole, FOREGROUND_RED);
-    
-    if (x < 0 || x % grid.cols > grid.cols || y < 0 || y % grid.rows > grid.rows) {
+
+    if (x < 0 || x % grid.cols > grid.cols || y < 0 || y % grid.rows > grid.rows)
+    {
         std::cout << x << ' ' << y << '\n';
         std::cout << "Aukaatoo baahr!\n";
         return false;
@@ -50,21 +52,25 @@ bool GG<T>::validateNextPos(int x, int y, int curX, int curY)
     if (x < 0 || x >= this->grid.rows || y < 0 || y >= this->grid.cols)
     {
         std::cout << "Invalid position\n";
-        SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
         return false;
     }
     
     else if (x > curX + 1 || x < curX - 1 || y > curY + 1 || y < curY - 1)
     {
         std::cout << "Error: Jitni chaadar dekhain utney paaon phelain!\n";
-        SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
         return false;
     }
 
     else if (this->grid.indexes[x][y] == ' ')
     {
         std::cout << "Kandd mei wajney ka ziada shok hai?\n";
-        SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+        return false;
+    }
+
+    // prevent diagonals switching
+    else if ((x > curX && y > curY || x > curX && y < curY) || (x < curX && y > curY || x < curX && y < curY))
+    {
+        std::cout << "Diagonals are not allowed!\n";
         return false;
     }
     return true;
@@ -265,7 +271,7 @@ void GG<T>::MakeConnections()
 
 // Dijkstra Algorithim for finding shortest path from source to dest
 template <typename T>
-int* GG<T>::dijkstra(int source, int dest)
+int *GG<T>::dijkstra(int source, int dest)
 {
     // Setting color control variable
     HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -328,7 +334,8 @@ int* GG<T>::dijkstra(int source, int dest)
         SetConsoleTextAttribute(hConsole, FOREGROUND_RED);
         std::cout << cur;
         // remove the ending/trailing arrow
-        if (cur != source) std::cout << " <- ";
+        if (cur != source)
+            std::cout << " <- ";
         cur = parent[cur];
     }
     SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
@@ -341,7 +348,7 @@ int* GG<T>::dijkstra(int source, int dest)
 template <typename T>
 void GG<T>::SimulateAutoCarMovement(int source, int dest)
 {
-    int* parent = new int[this->vertices];
+    int *parent = new int[this->vertices];
     parent = dijkstra(source, dest);
 
     // reversing the path array
@@ -371,9 +378,11 @@ void GG<T>::SimulateAutoCarMovement(int source, int dest)
 
     x = -1, y = -1;
     cur = 0;
-    while (i >= 0) {
+    while (i >= 0)
+    {
         // removing the car from the previous position
-        if (x != -1 && y != -1) this->grid.indexes[x][y] = '+';
+        if (x != -1 && y != -1)
+            this->grid.indexes[x][y] = '+';
         int index = path[cur];
         x = index / this->grid.cols;
         y = index % this->grid.cols;
@@ -383,7 +392,7 @@ void GG<T>::SimulateAutoCarMovement(int source, int dest)
         i == 0 ? Sleep(5000) : Sleep(500);
         system("cls");
         Print();
-        
+
         // updating counters
         i--;
         cur++;
@@ -404,20 +413,23 @@ void GG<T>::SimulatePlayerCarMovement(int source, int dest)
     y = dest % this->grid.cols;
     this->grid.indexes[x][y] = 'D';
 
-    while (source != dest) {
+    while (source != dest)
+    {
         Print();
         char choice;
         std::cout << "Enter the next position: ";
         std::cin >> x >> y;
         std::cout << "Save and Quit? Y/N: ";
         std::cin >> choice;
-        
-        if (choice == 'Y' || choice == 'y') {
+
+        if (choice == 'Y' || choice == 'y')
+        {
             storeCurrentProgress();
             return;
-        } 
+        }
 
-        if (validateNextPos(x, y, curX, curY) == false) {
+        if (validateNextPos(x, y, curX, curY) == false)
+        {
             continue;
         }
 
@@ -463,15 +475,18 @@ void GG<T>::restoreCurrentProgress()
         std::getline(file, line);
         for (int j = 0; j < cols; j++)
         {
-            if (line[j] != ' ' && line[j] != '+' && line[j] != 'C' && line[j] != 'D') {
+            if (line[j] != ' ' && line[j] != '+' && line[j] != 'C' && line[j] != 'D')
+            {
                 std::cout << "Invalid character found in file!\n";
                 exit(0);
             }
-            
+
             this->grid.indexes[i][j] = line[j];
             std::cout << line[j];
-            if (line[j] == 'C') source = (i * this->grid.cols) + j;
-            else if (line[j] == 'D') dest = (i * this->grid.cols) + j;
+            if (line[j] == 'C')
+                source = (i * this->grid.cols) + j;
+            else if (line[j] == 'D')
+                dest = (i * this->grid.cols) + j;
         }
         std::cout << '\n';
     }
@@ -485,13 +500,14 @@ void GG<T>::StartMenu()
 {
     std::string choice;
     std::cout << "Welcome!\n"
-    << "1. Simulate Auto Car Movement\n"
-    << "2. Simulate Player Car Movement\n"
-    << "3. Resume previous game\n"
-    << "4. Exit\n";
+              << "1. Simulate Auto Car Movement\n"
+              << "2. Simulate Player Car Movement\n"
+              << "3. Resume previous game\n"
+              << "4. Exit\n";
     std::getline(std::cin, choice);
 
-    if (choice == "1" || choice == "2") {    
+    if (choice == "1" || choice == "2")
+    {
         int sx, sy;
         int ex, ey;
 
@@ -503,28 +519,35 @@ void GG<T>::StartMenu()
         int source = (sx * this->grid.cols) + sy;
         int dest = (ex * this->grid.cols) + ey;
 
-        if (validateStartPos(source, dest) == true) {
-            if (choice == "1") {
+        if (validateStartPos(source, dest) == true)
+        {
+            if (choice == "1")
+            {
                 SimulateAutoCarMovement(source, dest);
             }
-            else if (choice == "2") {
+            else if (choice == "2")
+            {
                 SimulatePlayerCarMovement(source, dest);
             }
 
-            else {
+            else
+            {
                 std::cout << "Invalid choice!\n";
                 StartMenu();
             }
         }
     }
-    else if (choice == "3") {
+    else if (choice == "3")
+    {
         restoreCurrentProgress();
     }
 
-    else if (choice == "4") {
+    else if (choice == "4")
+    {
         exit(0);
     }
-    else {
+    else
+    {
         std::cout << "Invalid choice!\n";
         StartMenu();
     }
