@@ -40,6 +40,7 @@ void LL<T>::insertAtEnd(T data)
     if (head == nullptr)
     {
         head = newNode;
+        tail = newNode;
         return;
     }
 

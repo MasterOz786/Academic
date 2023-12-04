@@ -1,6 +1,7 @@
 
 #include <iostream>
 #include <fstream>
+#include <sstream>
 #include <algorithm>
 #include <ctime>
 #include "GG.hpp"
@@ -448,6 +449,7 @@ void GG<T>::storeCurrentProgress()
     std::ofstream file;
     file.open("progress.txt");
     file << this->grid.rows << " " << this->grid.cols << '\n';
+    // store the matrix
     for (int i = 0; i < this->grid.rows; i++)
     {
         for (int j = 0; j < this->grid.cols; j++)
@@ -456,6 +458,23 @@ void GG<T>::storeCurrentProgress()
         }
         file << '\n';
     }
+    // delimiter
+    file << "|\n";
+    // store the adjacency list
+    Node<Vertex> *temp = this->adj_list.head;
+    for (int i = 0; i < this->grid.rows * this->grid.cols; i++)
+    {
+        file << temp->data.GetID() << " ";
+        Node<Edge> *temp2 = temp->data.getNeighbours().head;
+        while (temp2 != nullptr)
+        {
+            file << temp2->data.dest << " ";
+            temp2 = temp2->next;
+        }
+        file << '\n';
+        temp = temp->next;
+    }
+
     file.close();
 }
 
@@ -469,29 +488,46 @@ void GG<T>::restoreCurrentProgress()
     CreateMatrix(rows, cols);
 
     int source, dest;
+    std::string line;
     for (int i = 0; i < rows; i++)
     {
-        std::string line;
         std::getline(file, line);
         for (int j = 0; j < cols; j++)
         {
-            if (line[j] != ' ' && line[j] != '+' && line[j] != 'C' && line[j] != 'D')
-            {
-                std::cout << "Invalid character found in file!\n";
-                exit(0);
-            }
-
+            // update the grid
             this->grid.indexes[i][j] = line[j];
-            std::cout << line[j];
+            // set the location of the car
             if (line[j] == 'C')
                 source = (i * this->grid.cols) + j;
+
+            // set the location of the destination
             else if (line[j] == 'D')
                 dest = (i * this->grid.cols) + j;
         }
-        std::cout << '\n';
     }
-    file.close();
+    
+    // first integer is the vertex, rest are the edges
+    std::getline(file, line);
+    while (file)
+    {
+        std::stringstream ss(line);
+        int vertex;
+        ss >> vertex;
 
+        this->adj_list.insertAtEnd(Vertex(vertex));
+        int edge;
+        
+        // read the remaining integers in the line
+        while (ss >> edge)
+        {
+            std::cout << edge << ' ';
+            this->adj_list.searchNode(vertex)->data.AddEdge(Edge(vertex, edge, '+'));
+        }
+
+        std::getline(file, line);
+    }
+
+    file.close();
     SimulatePlayerCarMovement(source, dest);
 }
 

@@ -83,7 +83,7 @@ class Vertex
     LL<Edge> neighbours;
 
 public:
-    Vertex(int id = -1, int type = '-', int distanceFromSource = 0)
+    Vertex(int id = -1, int type = '+', int distanceFromSource = 0)
     {
         this->id = id;
         this->type = type;
