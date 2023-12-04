@@ -22,6 +22,53 @@ GG<T>::GG(int r, int c)
 }
 
 template <typename T>
+bool GG<T>::validateStartPos(int x, int y)
+{
+    HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+    SetConsoleTextAttribute(hConsole, FOREGROUND_RED);
+    if (x < 0 || x >= this->grid.rows || y < 0 || y >= this->grid.cols)
+    {
+        std::cout << "Obstacle touunn ni start honna, kumm aali jaga toun gaddi nou sulf maaro ni te rehn deo..\n";
+        return false;
+    }
+    else if (this->grid.indexes[x][y] == ' ')
+    {
+        std::cout << "Kandd mei wajney ka ziada shok hai?\n";
+        return false;
+    }
+
+    return true;
+}
+
+template <typename T>
+bool GG<T>::validateNextPos(int x, int y, int curX, int curY)
+{
+    HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+    SetConsoleTextAttribute(hConsole, FOREGROUND_RED);
+    if (x < 0 || x >= this->grid.rows || y < 0 || y >= this->grid.cols)
+    {
+        std::cout << "Invalid position\n";
+        SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+        return false;
+    }
+    
+    else if (x > curX + 1 || x < curX - 1 || y > curY + 1 || y < curY - 1)
+    {
+        std::cout << "Error: Jitni chaadar dekhain utney paaon phelain!\n";
+        SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+        return false;
+    }
+
+    else if (this->grid.indexes[x][y] == ' ')
+    {
+        std::cout << "Kandd mei wajney ka ziada shok hai?\n";
+        SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+        return false;
+    }
+    return true;
+}
+
+template <typename T>
 void GG<T>::PrintVertexConnections(int v)
 {
     Node<Vertex> *temp = this->adj_list.head;
@@ -290,9 +337,8 @@ int* GG<T>::dijkstra(int source, int dest)
 
 // Function for showing car traveling from one point to the other on the grid and car is represented  by C and Destination is represented by D
 template <typename T>
-void GG<T>::simulateCarMovementFromSourceToDest(int source, int dest)
+void GG<T>::SimulateAutoCarMovement(int source, int dest)
 {
-    std::cout << this->vertices << '\n';
     int* parent = new int[this->vertices];
     parent = dijkstra(source, dest);
 
@@ -312,10 +358,11 @@ void GG<T>::simulateCarMovementFromSourceToDest(int source, int dest)
     path = (int *)realloc(path, i * sizeof(int));
     delete[] parent;
 
-    // setting the start and end points
+    // setting the start point
     int x = source / this->grid.cols;
     int y = source % this->grid.cols;
     this->grid.indexes[x][y] = 'C';
+    /// setting the end point
     x = dest / this->grid.cols;
     y = dest % this->grid.cols;
     this->grid.indexes[x][y] = 'D';
@@ -323,16 +370,92 @@ void GG<T>::simulateCarMovementFromSourceToDest(int source, int dest)
     x = -1, y = -1;
     cur = 0;
     while (i >= 0) {
+        // removing the car from the previous position
         if (x != -1 && y != -1) this->grid.indexes[x][y] = '+';
         int index = path[cur];
         x = index / this->grid.cols;
         y = index % this->grid.cols;
+
+        // printing the grid with delays and updating the car positon
         this->grid.indexes[x][y] = 'C';
-        Sleep(1000);
+        i == 0 ? Sleep(5000) : Sleep(500);
         system("cls");
         Print();
+        
+        // updating counters
         i--;
         cur++;
     }
-    Print();
+}
+
+template <typename T>
+void GG<T>::SimulatePlayerCarMovement(int source, int dest)
+{
+    int x, y;
+    int curX, curY;
+    x = source / this->grid.cols;
+    y = source % this->grid.cols;
+    this->grid.indexes[x][y] = 'C';
+    curX = x, curY = y;
+
+    x = dest / this->grid.cols;
+    y = dest % this->grid.cols;
+    this->grid.indexes[x][y] = 'D';
+
+    while (source != dest) {
+        Print();
+        std::cout << "Enter the next position: ";
+        std::cin >> x >> y;
+
+        if (validateNextPos(x, y, curX, curY) == false) {
+            continue;
+        }
+
+        this->grid.indexes[x][y] = 'C';
+        this->grid.indexes[curX][curY] = '+';
+        curX = x, curY = y;
+
+        system("cls");
+        Print();
+    }
+}
+
+template <typename T>
+void GG<T>::StartMenu()
+{
+    std::string choice;
+    std::cout << "Welcome!\n"
+    << "1. Simulate Auto Car Movement\n"
+    << "2. Simulate Player Car Movement\n"
+    << "3. Exit\n";
+    std::getline(std::cin, choice);
+
+    if (choice != "3") {    
+        int sx, sy;
+        int ex, ey;
+
+        std::cout << "Enter the start index: ";
+        std::cin >> sx >> sy;
+        std::cout << "Enter the end index: ";
+        std::cin >> ex >> ey;
+
+        int source = (sx * this->grid.cols) + sy;
+        int dest = (ex * this->grid.cols) + ey;
+
+        if (validateStartPos(source, dest) == true) {
+            if (choice == "1") {
+                SimulateAutoCarMovement(source, dest);
+            }
+            else if (choice == "2") {
+                SimulatePlayerCarMovement(source, dest);
+            }
+        }
+    }
+    else if (choice == "3") {
+        exit(0);
+    }
+    else {
+        std::cout << "Invalid choice!\n";
+        StartMenu();
+    }
 }

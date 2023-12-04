@@ -14,18 +14,25 @@ class GG
 public:
     GG();
     GG(int r, int c);
+
     void PrintAdjacencyList();
     void Print();
-    int* dijkstra(int source, int dest);
-    void simulateCarMovementFromSourceToDest(int source, int dest);
+    
+    void SimulateAutoCarMovement(int source, int dest);
+    void SimulatePlayerCarMovement(int source, int dest);
+    void StartMenu();
 
 private:
     int vertices;
     Grid grid;
     LL<Vertex> adj_list;
 
+    int* dijkstra(int source, int dest);
     void CreateMatrix(int rows, int cols);
     void GenerateRandomGraph();
     void MakeConnections();
     void PrintVertexConnections(int v);
+    
+    bool validateNextPos(int x, int y, int curX, int curY);
+    bool validateStartPos(int x, int y);
 };
