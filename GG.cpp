@@ -554,7 +554,7 @@ void GG<T>::restoreCurrentProgress()
 
     file.close();
 
-    SimulatePlayerCarMovement(source, dest);
+    SimulatePlayerCarMovement(source, dest) ;
 }
 
 template <typename T>
