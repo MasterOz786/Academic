@@ -109,21 +109,22 @@ void Heap::print()
     std::cout << std::endl;
 }
 
-int main()
-{
-    Heap h(11);
-    h.insert(3);
-    h.insert(2);
-    // h.deleteKey(1);
-    h.insert(15);
-    h.insert(5);
-    h.insert(4);
-    h.insert(45);
-    h.print();
-    std::cout << h.extractMax() << " ";
-    std::cout << h.getMax() << " ";
-    h.decreaseKey(2, 1);
-    std::cout << h.getMax();
-    return 0;
-}
+// int main()
+// {
+//     Heap h(11);
+//     h.insert(3);
+//     h.insert(2);
+//     h.deleteKey(1);
+//     h.insert(15);
+//     h.insert(5);
+//     h.insert(4);
+//     h.insert(45);
+//     h.print();
+//     std::cout << h.extractMax() << " ";
+//     std::cout << h.getMax() << " ";
+//     h.decreaseKey(2, 1);
+//     std::cout << h.getMax();
+//
+//     return 0;
+// }
 

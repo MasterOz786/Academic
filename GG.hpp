@@ -32,7 +32,10 @@ private:
     void GenerateRandomGraph();
     void MakeConnections();
     void PrintVertexConnections(int v);
-    
+
     bool validateNextPos(int x, int y, int curX, int curY);
     bool validateStartPos(int x, int y);
+
+    void storeCurrentProgress();
+    void restoreCurrentProgress();
 };

@@ -1,5 +1,6 @@
 
 #include <iostream>
+#include <fstream>
 #include <algorithm>
 #include <ctime>
 #include "GG.hpp"
@@ -26,14 +27,15 @@ bool GG<T>::validateStartPos(int x, int y)
 {
     HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
     SetConsoleTextAttribute(hConsole, FOREGROUND_RED);
-    if (x < 0 || x >= this->grid.rows || y < 0 || y >= this->grid.cols)
-    {
-        std::cout << "Obstacle touunn ni start honna, kumm aali jaga toun gaddi nou sulf maaro ni te rehn deo..\n";
+    
+    if (x < 0 || x % grid.cols > grid.cols || y < 0 || y % grid.rows > grid.rows) {
+        std::cout << x << ' ' << y << '\n';
+        std::cout << "Aukaatoo baahr!\n";
         return false;
     }
     else if (this->grid.indexes[x][y] == ' ')
     {
-        std::cout << "Kandd mei wajney ka ziada shok hai?\n";
+        std::cout << "Obstacle touunn ni start honna, kumm aali jaga toun gaddi nou sulf maaro ni te rehn deo..\n";
         return false;
     }
 
@@ -404,8 +406,16 @@ void GG<T>::SimulatePlayerCarMovement(int source, int dest)
 
     while (source != dest) {
         Print();
+        char choice;
         std::cout << "Enter the next position: ";
         std::cin >> x >> y;
+        std::cout << "Save and Quit? Y/N: ";
+        std::cin >> choice;
+        
+        if (choice == 'Y' || choice == 'y') {
+            storeCurrentProgress();
+            return;
+        } 
 
         if (validateNextPos(x, y, curX, curY) == false) {
             continue;
@@ -421,16 +431,67 @@ void GG<T>::SimulatePlayerCarMovement(int source, int dest)
 }
 
 template <typename T>
+void GG<T>::storeCurrentProgress()
+{
+    std::ofstream file;
+    file.open("progress.txt");
+    file << this->grid.rows << " " << this->grid.cols << '\n';
+    for (int i = 0; i < this->grid.rows; i++)
+    {
+        for (int j = 0; j < this->grid.cols; j++)
+        {
+            file << this->grid.indexes[i][j];
+        }
+        file << '\n';
+    }
+    file.close();
+}
+
+template <typename T>
+void GG<T>::restoreCurrentProgress()
+{
+    std::ifstream file;
+    file.open("progress.txt");
+    int rows, cols;
+    file >> rows >> cols >> std::ws;
+    CreateMatrix(rows, cols);
+
+    int source, dest;
+    for (int i = 0; i < rows; i++)
+    {
+        std::string line;
+        std::getline(file, line);
+        for (int j = 0; j < cols; j++)
+        {
+            if (line[j] != ' ' && line[j] != '+' && line[j] != 'C' && line[j] != 'D') {
+                std::cout << "Invalid character found in file!\n";
+                exit(0);
+            }
+            
+            this->grid.indexes[i][j] = line[j];
+            std::cout << line[j];
+            if (line[j] == 'C') source = (i * this->grid.cols) + j;
+            else if (line[j] == 'D') dest = (i * this->grid.cols) + j;
+        }
+        std::cout << '\n';
+    }
+    file.close();
+
+    SimulatePlayerCarMovement(source, dest);
+}
+
+template <typename T>
 void GG<T>::StartMenu()
 {
     std::string choice;
     std::cout << "Welcome!\n"
     << "1. Simulate Auto Car Movement\n"
     << "2. Simulate Player Car Movement\n"
-    << "3. Exit\n";
+    << "3. Resume previous game\n"
+    << "4. Exit\n";
     std::getline(std::cin, choice);
 
-    if (choice != "3") {    
+    if (choice == "1" || choice == "2") {    
         int sx, sy;
         int ex, ey;
 
@@ -449,9 +510,18 @@ void GG<T>::StartMenu()
             else if (choice == "2") {
                 SimulatePlayerCarMovement(source, dest);
             }
+
+            else {
+                std::cout << "Invalid choice!\n";
+                StartMenu();
+            }
         }
     }
     else if (choice == "3") {
+        restoreCurrentProgress();
+    }
+
+    else if (choice == "4") {
         exit(0);
     }
     else {
