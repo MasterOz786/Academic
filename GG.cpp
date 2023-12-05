@@ -461,7 +461,7 @@ void GG<T>::SimulatePlayerCarMovement(int source, int dest)
         if (validateNextPos(sourceX, sourceY, curX, curY) == false)
         {
             sourceX = curX;
-            sourceY = curY;
+            sourceY = curY ;
             HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
             SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
 
