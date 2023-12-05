@@ -23,6 +23,11 @@ int Player::GetCurrentScore() const
     return this->score;
 }
 
+std::string Player::GetName() const
+{
+    return this->name;
+}
+
 double Player::GetCurrentMultiplier() const
 {
     return this->multiplier;

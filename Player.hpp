@@ -26,4 +26,5 @@ class Player {
         void UpdateMultiplier(double multiplier);
         int GetCurrentScore() const;
         double GetCurrentMultiplier() const;
+        std::string GetName() const;
 };

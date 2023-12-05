@@ -588,7 +588,7 @@ void GG<T>::SimulatePlayerCarMovement(int source, int dest)
 template <typename T>
 void GG<T>::SortLeaderboards()
 {
-    fstream f("Leaderboard.txt");
+    std::fstream f("Leaderboard.txt");
     // read the score
     
 }
@@ -597,9 +597,9 @@ template <typename T>
 void GG<T>::UpdateRecords()
 {
     // store the current player's name and score
-    std::ostream fout;
-    fout.open("Leaderboard.txt", std::ios::app);
-    fout << this->player.GetName() << " " << this->player.GetCurrentScore() << '\n';
+    std::fstream f;
+    f.open("Leaderboard.txt", std::ios::app);
+    f << this->player.GetName() << " " << this->player.GetCurrentScore() << '\n';
 }
 
 template <typename T>
