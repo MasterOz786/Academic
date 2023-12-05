@@ -15,6 +15,7 @@ template <typename T>
 GG<T>::GG()
 {
     this->vertices = 0;
+    this->level = 1;
 }
 
 template <typename T>
@@ -23,6 +24,8 @@ GG<T>::GG(int r, int c)
     this->grid.rows = r;
     this->grid.cols = c;
     this->vertices = r * c;
+    this->level = 1;
+
     CreateMatrix(r, c);
 }
 
@@ -82,6 +85,7 @@ bool GG<T>::validateNextPos(int x, int y, int curX, int curY)
 template <typename T>
 void GG<T>::ManageScore(char object)
 {
+    // coins are encountered
     if (object == 'c')
     {
         this->player.UpdateScore(10);
@@ -95,6 +99,11 @@ void GG<T>::ManageScore(char object)
         else if (this->player.GetCurrentMultiplier() == 1.8) this->player.UpdateMultiplier(2.0);
         // increment the multipliers by 0.5 once its greater or equal to 2.0
         else this->player.UpdateMultiplier(this->player.GetCurrentMultiplier() + 0.5);
+    }
+    // if the destination is encountered
+    else if (object == 'D') 
+    {
+        this->player.UpdateScore(100);
     }
 }
 
@@ -344,14 +353,17 @@ void GG<T>::Print()
         std::cout << '\n';
     }
     SetConsoleTextAttribute(hConsole, FOREGROUND_INTENSITY);
-    std::cout << "Score: " << this->player.GetCurrentScore() << "\n\n";
+    std::cout << "Level: " << this->level << '\n'
+    << "Multiplier: " << this->player.GetCurrentMultiplier() << '\n'
+    << "Score: " << this->player.GetCurrentScore() << '\n';
+
     // reset the colors to white
     SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
 }
 
 // Dijkstra Algorithim for finding shortest path from source to dest
 template <typename T>
-int *GG<T>::dijkstra(int source, int dest)
+int *GG<T>::Djisktra(int source, int dest)
 {
     // Setting color control variable
     HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -429,7 +441,7 @@ template <typename T>
 void GG<T>::SimulateAutoCarMovement(int source, int dest)
 {
     int *parent = new int[this->vertices];
-    parent = dijkstra(source, dest);
+    parent = Djisktra(source, dest);
 
     // reversing the path array
     int *path = new int[this->vertices];
@@ -532,10 +544,13 @@ void GG<T>::SimulatePlayerCarMovement(int source, int dest)
             sourceY += 1;
             break;
         case 'y':
-            storeCurrentProgress();
+            break;
+        case 'Y':
+            break;
         default:
             break;
         }
+        storeCurrentProgress();
 
         if (validateNextPos(sourceX, sourceY, curX, curY) == false)
         {
@@ -556,11 +571,11 @@ void GG<T>::SimulatePlayerCarMovement(int source, int dest)
 
         // clear and show the result grid
         system("cls");
-        Print();
 
         // checking if the car has reached the destination or not
         if (sourceX == destX && sourceY == destY)
         {
+            Print();
             HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
             SetConsoleTextAttribute(hConsole, FOREGROUND_BLUE);
             std::cout << "\nHURRAH, You have won the game!\n";
@@ -568,6 +583,23 @@ void GG<T>::SimulatePlayerCarMovement(int source, int dest)
             break;
         }
     }
+}
+
+template <typename T>
+void GG<T>::SortLeaderboards()
+{
+    fstream f("Leaderboard.txt");
+    // read the score
+    
+}
+
+template <typename T>
+void GG<T>::UpdateRecords()
+{
+    // store the current player's name and score
+    std::ostream fout;
+    fout.open("Leaderboard.txt", std::ios::app);
+    fout << this->player.GetName() << " " << this->player.GetCurrentScore() << '\n';
 }
 
 template <typename T>
@@ -712,12 +744,13 @@ void GG<T>::StartMenu()
             if (choice == "1")
             {
                 SimulateAutoCarMovement(source, dest);
+                UpdateRecords();
             }
             else if (choice == "2")
             {
                 SimulatePlayerCarMovement(source, dest);
+                UpdateRecords();
             }
-
             else
             {
                 std::cout << "Invalid choice!\n";

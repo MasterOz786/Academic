@@ -1,5 +1,11 @@
 
 #pragma once
+
+struct PlayerData {
+    std::string name;
+    int score;
+};
+
 #include <iostream>
 class Player {
     private:

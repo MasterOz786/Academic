@@ -28,8 +28,9 @@ private:
     Grid grid;
     LL<Vertex> adj_list;
     Player player;
+    int level;
 
-    int* dijkstra(int source, int dest);
+    int* Djisktra(int source, int dest);
     void CreateMatrix(int rows, int cols);
     void GenerateRandomGraph();
     void MakeConnections();
@@ -38,6 +39,8 @@ private:
     bool validateNextPos(int x, int y, int curX, int curY);
     bool validateStartPos(int x, int y);
     void ManageScore(char object);
+    void SortLeaderboards();
+    void UpdateRecords();
 
     void storeCurrentProgress();
     void restoreCurrentProgress();
