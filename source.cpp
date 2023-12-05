@@ -4,6 +4,7 @@
 #include "LL.cpp"
 using namespace std;
 
+
 int main()
 {
     GG<int> g(10, 10);

@@ -4,11 +4,12 @@
 #include <algorithm>
 #include<sstream>
 #include <ctime>
+#include <conio.h>
 #include "GG.hpp"
 #include "Queue.hpp"
 #include <Windows.h>
 
-// Graph class implementation3
+// Graph class implementation
 template <typename T>
 GG<T>::GG()
 {
@@ -403,43 +404,85 @@ void GG<T>::SimulateAutoCarMovement(int source, int dest)
 template <typename T>
 void GG<T>::SimulatePlayerCarMovement(int source, int dest)
 {
-    int x, y;
+    int sourceX, sourceY;
+    int destX, destY;
+
     int curX, curY;
-    x = source / this->grid.cols;
-    y = source % this->grid.cols;
-    this->grid.indexes[x][y] = 'C';
-    curX = x, curY = y;
+    sourceX = source / this->grid.cols;
+    sourceY = source % this->grid.cols;
+    this->grid.indexes[sourceX][sourceY] = 'C';
+    curX = sourceX, curY = sourceY;
 
-    x = dest / this->grid.cols;
-    y = dest % this->grid.cols;
-    this->grid.indexes[x][y] = 'D';
+    destX = dest / this->grid.cols;
+    destY = dest % this->grid.cols;
+    this->grid.indexes[destX][destY] = 'D';
 
-    while (source != dest)
+    while (sourceX != destX || sourceY != destY)
     {
         Print();
-        char choice;
-        std::cout << "Enter the next position: ";
-        std::cin >> x >> y;
-        std::cout << "Save and Quit? Y/N: ";
-        std::cin >> choice;
+ 
+        char ch;
 
-        if (choice == 'Y' || choice == 'y')
+        std::cout << "Press arrow keys to move your car on path\n";
+        std::cout << "Save and Quit? (y)\n";
+        // std::cin >> x >> y;
+            ch = _getch(); // Read the actual key code
+            switch(ch) {
+                case 72:   // For up arrow key
+
+                        sourceX -= 1;
+                    
+                    break;
+                case 80:   // For down key
+
+                        sourceX += 1;
+                    
+                    break;
+                case 75:   // For left arrow key
+                        sourceY -= 1;
+                    
+                    break;
+                case 77:  // For right arrow key
+    
+                        sourceY += 1;
+                    
+                    break;
+                    case 'y':
+                        storeCurrentProgress();
+                        return;
+                        break;
+                default:
+                    break;
+            }
+    
+
+        
+
+        if (validateNextPos(sourceX, sourceY, curX, curY) == false)
         {
-            storeCurrentProgress();
-            return;
+            sourceX = curX;
+            sourceY = curY;
+            HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+            SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+
+            //continue;
         }
 
-        if (validateNextPos(x, y, curX, curY) == false)
-        {
-            continue;
-        }
+            this->grid.indexes[sourceX][sourceY] = 'C';
 
-        this->grid.indexes[x][y] = 'C';
-        this->grid.indexes[curX][curY] = '+';
-        curX = x, curY = y;
+        if(sourceX != curX || sourceY != curY)
+            this->grid.indexes[curX][curY] = '+';
+        curX = sourceX, curY = sourceY;
+
+
+        
 
         system("cls");
         Print();
+        // CHeck9ng the carv has reach the detination or not
+        if(sourceX == destX && sourceY == destY){
+            std::cout << "HURRAH, You have won the game!" << std::endl;
+         }
     }
 }
 
