@@ -1,4 +1,3 @@
-
 #include "Player.hpp"
 
 Player::Player(std::string name, int score, double multiplier)
@@ -8,9 +7,22 @@ Player::Player(std::string name, int score, double multiplier)
     this->multiplier = multiplier;
 }
 
+void Player::SetName(std::string name)
+{
+    this->name = name;
+}
+
 void Player::UpdateScore(int factor)
 {
-    this->score += factor * multiplier;
+    if(factor < 0)
+    {
+        if(this->score - factor <= 0)
+            this->score = 0;
+        else
+            this->score += factor;
+    }
+    else
+        this->score += factor * multiplier;
 }
 
 void Player::UpdateMultiplier(double multiplier)

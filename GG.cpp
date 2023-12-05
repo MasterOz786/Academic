@@ -7,6 +7,7 @@
 #include <conio.h>
 #include <Windows.h>
 
+#include "MaxHeap.cpp"
 #include "Queue.hpp"
 #include "GG.hpp"
 
@@ -15,7 +16,6 @@ template <typename T>
 GG<T>::GG()
 {
     this->vertices = 0;
-    this->level = 1;
 }
 
 template <typename T>
@@ -24,8 +24,10 @@ GG<T>::GG(int r, int c)
     this->grid.rows = r;
     this->grid.cols = c;
     this->vertices = r * c;
-    this->level = 1;
 
+    initializePowerUps();
+    initializeObstacels();
+    initializeCoins();
     CreateMatrix(r, c);
 }
 
@@ -35,7 +37,10 @@ bool GG<T>::validateStartPos(int x, int y)
     HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
     SetConsoleTextAttribute(hConsole, FOREGROUND_RED);
 
-    if (x < 0 || x % grid.cols > grid.cols || y < 0 || y % grid.rows > grid.rows)
+    x = x % this->grid.cols;
+    y = y % this->grid.cols;
+
+    if (x < 0 || x >= this->grid.rows || y < 0 || y >= this->grid.cols)
     {
         std::cout << x << ' ' << y << '\n';
         std::cout << "Aukaatoo baahr!\n";
@@ -43,10 +48,15 @@ bool GG<T>::validateStartPos(int x, int y)
     }
     else if (this->grid.indexes[x][y] == ' ')
     {
+        std::cout << x << ' ' << y << '\n';
         std::cout << "Obstacle touunn ni start honna, kumm aali jaga toun gaddi nou sulf maaro ni te rehn deo..\n";
         return false;
     }
-
+    else if (this->grid.indexes[x][y] != '+')
+    {
+        std::cout << "Galat jagah taang aur gaari ni khari krteyy betaaaaa!!\n";
+        return false;
+    }
     return true;
 }
 
@@ -86,24 +96,33 @@ template <typename T>
 void GG<T>::ManageScore(char object)
 {
     // coins are encountered
-    if (object == 'c')
+    if (object == '$')
     {
         this->player.UpdateScore(10);
     }
     // increment from 1.2 --> 1.5 --> 1.8 --> 2.0 --> 2.5 --> 3.0 and +5 till infinity
-    else if (object == 'P')
+    else if (object == '*')
     {
-        if (this->player.GetCurrentMultiplier() == 1.0) this->player.UpdateMultiplier(1.2);
-        else if (this->player.GetCurrentMultiplier() == 1.2) this->player.UpdateMultiplier(1.5);
-        else if (this->player.GetCurrentMultiplier() == 1.5) this->player.UpdateMultiplier(1.8);
-        else if (this->player.GetCurrentMultiplier() == 1.8) this->player.UpdateMultiplier(2.0);
+        if (this->player.GetCurrentMultiplier() == 1.0)
+            this->player.UpdateMultiplier(1.2);
+        else if (this->player.GetCurrentMultiplier() == 1.2)
+            this->player.UpdateMultiplier(1.5);
+        else if (this->player.GetCurrentMultiplier() == 1.5)
+            this->player.UpdateMultiplier(1.8);
+        else if (this->player.GetCurrentMultiplier() == 1.8)
+            this->player.UpdateMultiplier(2.0);
         // increment the multipliers by 0.5 once its greater or equal to 2.0
-        else this->player.UpdateMultiplier(this->player.GetCurrentMultiplier() + 0.5);
+        else
+            this->player.UpdateMultiplier(this->player.GetCurrentMultiplier() + 0.5);
     }
     // if the destination is encountered
-    else if (object == 'D') 
+    else if (object == 'D')
     {
         this->player.UpdateScore(100);
+    }
+    else if (object == '#')
+    {
+        this->player.UpdateScore(-5);
     }
 }
 
@@ -131,6 +150,42 @@ void GG<T>::PrintAdjacencyList()
 }
 
 template <typename T>
+void GG<T>::initializePowerUps()
+{
+    for (int i = 0; i < grid.rows; i++)
+    {
+        for (int j = 0; j < grid.cols; j++)
+        {
+            powerUps.enqueue('*');
+        }
+    }
+}
+
+template <typename T>
+void GG<T>::initializeObstacels()
+{
+    for (int i = 0; i < grid.rows; i++)
+    {
+        for (int j = 0; j < grid.cols; j++)
+        {
+            obstacles.enqueue('#');
+        }
+    }
+}
+
+template <typename T>
+void GG<T>::initializeCoins()
+{
+    for (int i = 0; i < grid.rows; i++)
+    {
+        for (int j = 0; j < grid.cols; j++)
+        {
+            coins.enqueue('$');
+        }
+    }
+}
+
+template <typename T>
 void GG<T>::CreateMatrix(int rows, int cols)
 {
     // store the adjacency list in a pair matrix
@@ -147,11 +202,29 @@ void GG<T>::CreateMatrix(int rows, int cols)
 }
 
 template <typename T>
+void GG<T>::FreeMatrix()
+{
+    // freeing the memory
+    for (int i = 0; i < this->grid.rows; i++)
+    {
+        delete[] this->grid.indexes[i];
+    }
+    delete[] this->grid.indexes;
+
+    // Deleting randomly generatrd list
+    delete adj_list.head;
+    delete adj_list.tail;
+    adj_list.head = nullptr;
+    adj_list.tail = nullptr;
+}
+
+template <typename T>
 void GG<T>::GenerateRandomGraph()
 {
     srand(time(0));
     // filling the adjacency list
     for (int i = 0; i < this->grid.rows; i++)
+    {
         for (int j = 0; j < this->grid.cols; j++)
         {
             // generate free spaces/no-go areas
@@ -165,7 +238,8 @@ void GG<T>::GenerateRandomGraph()
             // generate power-ups
             else if (rand() % 14 == 10)
             {
-                int weight = 'P';
+                int weight = this->powerUps.showFront();
+                powerUps.dequeue();
                 // make sure the power ups aren't placed nearby each other and make it memory safe
                 if (
                     (i > 0 && this->grid.indexes[i - 1][j] != weight) &&
@@ -189,14 +263,39 @@ void GG<T>::GenerateRandomGraph()
             // generate coins
             else if (rand() % 5 == 1)
             {
-                int weight = 'c';
+                int weight = this->coins.showFront();
+                coins.dequeue();
                 // make sure the coins aren't placed nearby each other and make it memory safe
                 if (
                     (i > 0 && this->grid.indexes[i - 1][j] != weight) &&
                     (i < this->grid.cols - 1 && this->grid.indexes[i + 1][j] != weight) &&
                     (j > 0 && this->grid.indexes[i][j - 1] != weight) &&
-                    (j < this->grid.cols - 1 && this->grid.indexes[i][j + 1] != weight)
-                ) {
+                    (j < this->grid.cols - 1 && this->grid.indexes[i][j + 1] != weight))
+                {
+                    this->grid.indexes[i][j] = weight;
+                    this->adj_list.insertAtEnd(Vertex((i * this->grid.cols) + j, weight));
+                }
+
+                // just place a blank weight
+                else
+                {
+                    weight = ' ';
+                    this->grid.indexes[i][j] = weight;
+                    this->adj_list.insertAtEnd(Vertex((i * this->grid.cols) + j, weight));
+                }
+            }
+            else if (rand() % 15 == 1)
+            {
+
+                int weight = this->obstacles.showFront();
+                obstacles.dequeue();
+                // make sure the coins aren't placed nearby each other and make it memory safe
+                if (
+                    (i > 0 && this->grid.indexes[i - 1][j] != weight) &&
+                    (i < this->grid.cols - 1 && this->grid.indexes[i + 1][j] != weight) &&
+                    (j > 0 && this->grid.indexes[i][j - 1] != weight) &&
+                    (j < this->grid.cols - 1 && this->grid.indexes[i][j + 1] != weight))
+                {
                     this->grid.indexes[i][j] = weight;
                     this->adj_list.insertAtEnd(Vertex((i * this->grid.cols) + j, weight));
                 }
@@ -217,6 +316,7 @@ void GG<T>::GenerateRandomGraph()
                 this->adj_list.insertAtEnd(Vertex((i * this->grid.cols) + j, weight));
             }
         }
+    }
 }
 
 template <typename T>
@@ -353,9 +453,8 @@ void GG<T>::Print()
         std::cout << '\n';
     }
     SetConsoleTextAttribute(hConsole, FOREGROUND_INTENSITY);
-    std::cout << "Level: " << this->level << '\n'
-    << "Multiplier: " << this->player.GetCurrentMultiplier() << '\n'
-    << "Score: " << this->player.GetCurrentScore() << '\n';
+    std::cout << "Multiplier: " << this->player.GetCurrentMultiplier() << '\n'
+              << "Score: " << this->player.GetCurrentScore() << '\n';
 
     // reset the colors to white
     SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
@@ -442,7 +541,6 @@ void GG<T>::SimulateAutoCarMovement(int source, int dest)
 {
     int *parent = new int[this->vertices];
     parent = Djisktra(source, dest);
-
     // reversing the path array
     int *path = new int[this->vertices];
     int i = 0;
@@ -543,14 +641,19 @@ void GG<T>::SimulatePlayerCarMovement(int source, int dest)
         case 77: // For right arrow key
             sourceY += 1;
             break;
-        case 'y':
-            break;
-        case 'Y':
-            break;
         default:
             break;
         }
+
         storeCurrentProgress();
+
+        if (ch == 'y' || ch == 'Y')
+        {
+            std::cin.ignore();
+            FreeMatrix();
+            StartMenu();
+            return;
+        }
 
         if (validateNextPos(sourceX, sourceY, curX, curY) == false)
         {
@@ -588,9 +691,30 @@ void GG<T>::SimulatePlayerCarMovement(int source, int dest)
 template <typename T>
 void GG<T>::SortLeaderboards()
 {
-    std::fstream f("Leaderboard.txt");
-    // read the score
-    
+    std::fstream f("Leaderboard.txt", std::ios::in);
+    std::string line, name;
+    std::getline(f, line);
+
+    Heap heap(10);
+    int score;
+    while (f)
+    {
+        std::stringstream ss(line);
+        ss >> name >> score;
+
+        PlayerData player(name, score);
+        heap.insert(player);
+        std::getline(f, line);
+    }
+
+    f.close();
+
+    f.open("Leaderboard.txt", std::ios::out);
+    while (!heap.isEmpty())
+    {
+        PlayerData player = heap.extractMax();
+        f << player.name << " " << player.score << '\n';
+    }
 }
 
 template <typename T>
@@ -600,6 +724,9 @@ void GG<T>::UpdateRecords()
     std::fstream f;
     f.open("Leaderboard.txt", std::ios::app);
     f << this->player.GetName() << " " << this->player.GetCurrentScore() << '\n';
+
+    f.close();
+    SortLeaderboards();
 }
 
 template <typename T>
@@ -691,7 +818,6 @@ void GG<T>::restoreCurrentProgress()
     // first integer is the vertex, rest are the edges
     while (file)
     {
-
         std::stringstream ss(line);
         int vertex;
         ss >> vertex;
@@ -716,20 +842,70 @@ void GG<T>::restoreCurrentProgress()
 }
 
 template <typename T>
+void GG<T>::ShowLeaderboards()
+{
+    HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+
+    std::cout << '\n';
+    std::ifstream f("Leaderboard.txt");
+    std::string line;
+    std::getline(f, line);
+    SetConsoleTextAttribute(hConsole, FOREGROUND_GREEN);
+    std::cout << "Rank\t\tName\t\tScore\n";
+    int rank = 1;
+    SetConsoleTextAttribute(hConsole, FOREGROUND_BLUE);
+    while (f)
+    {
+        std::stringstream ss(line);
+        std::string name;
+        int score;
+        ss >> name >> score;
+        std::cout << rank << "\t\t" << name << "\t\t" << score << '\n';
+        std::getline(f, line);
+
+        rank++;
+    }
+
+    std::cout << '\n';
+    f.close();
+}
+
+template <typename T>
 void GG<T>::StartMenu()
 {
+    HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+    CreateMatrix(this->grid.rows, this->grid.cols);
+    std::string name;
+    SetConsoleTextAttribute(hConsole, FOREGROUND_RED);
+
+    Sleep(1000);
+    std::cout << "\n\nWelcome to Shurli - A 2D Car Race Game!!\n\n";
+    Sleep(2000);
+
+    SetConsoleTextAttribute(hConsole, FOREGROUND_BLUE);
+    std::cout << "Your good name? ";
+    std::getline(std::cin, name);
+    this->player.SetName(name);
+
+    Sleep(2000);
+    SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_BLUE | FOREGROUND_GREEN);
     std::string choice;
-    std::cout << "Welcome!\n"
+    std::cout << "\n\nWhat do you want to do?\n"
               << "1. Simulate Auto Car Movement\n"
               << "2. Simulate Player Car Movement\n"
               << "3. Resume previous game\n"
-              << "4. Exit\n";
+              << "4. Leaderboards\n"
+              << "5. Exit\n";
     std::getline(std::cin, choice);
 
     if (choice == "1" || choice == "2")
     {
         int sx, sy;
         int ex, ey;
+
+        Sleep(1000);
+        Print();
+        Sleep(2000);
 
         std::cout << "Enter the start index: ";
         std::cin >> sx >> sy;
@@ -744,18 +920,43 @@ void GG<T>::StartMenu()
             if (choice == "1")
             {
                 SimulateAutoCarMovement(source, dest);
-                UpdateRecords();
+                std::cin.ignore();
+
+                std::string choice;
+                std::cout << "Want to save the records? ";
+                std::getline(std::cin, choice);
+
+                if (choice == "Y" || choice == "y")
+                {
+
+                    UpdateRecords();
+                    std::cout << "Records updated with the name " << this->player.GetName() << " having a score of " << this->player.GetCurrentScore() << "!\n\n";
+                    Sleep(2000);
+                }
             }
             else if (choice == "2")
             {
                 SimulatePlayerCarMovement(source, dest);
-                UpdateRecords();
+                std::cin.ignore();
+
+                std::string choice;
+                std::cout << "Want to save the records? ";
+                std::getline(std::cin, choice);
+
+                if (choice == "Y" || choice == "y")
+                {
+                    UpdateRecords();
+
+                    std::cout << "Records updated with the name " << this->player.GetName() << " having a score of " << this->player.GetCurrentScore() << "!\n\n";
+                    Sleep(2000);
+                }
             }
             else
             {
                 std::cout << "Invalid choice!\n";
-                StartMenu();
             }
+            FreeMatrix();
+            StartMenu();
         }
     }
     else if (choice == "3")
@@ -765,11 +966,17 @@ void GG<T>::StartMenu()
 
     else if (choice == "4")
     {
+        ShowLeaderboards();
+        StartMenu();
+    }
+    else if (choice == "5")
+    {
         exit(0);
     }
     else
     {
         std::cout << "Invalid choice!\n";
+        FreeMatrix();
         StartMenu();
     }
 }

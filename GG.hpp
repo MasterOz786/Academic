@@ -22,20 +22,27 @@ public:
     void SimulateAutoCarMovement(int source, int dest);
     void SimulatePlayerCarMovement(int source, int dest);
     void StartMenu();
+    void ShowLeaderboards();
 
 private:
     int vertices;
     Grid grid;
     LL<Vertex> adj_list;
     Player player;
-    int level;
+    PriorityQueue<char> powerUps;
+    PriorityQueue<char> obstacles;
+    PriorityQueue<char> coins;
 
-    int* Djisktra(int source, int dest);
     void CreateMatrix(int rows, int cols);
+    void FreeMatrix();
+    int* Djisktra(int source, int dest);
     void GenerateRandomGraph();
     void MakeConnections();
     void PrintVertexConnections(int v);
 
+    void initializePowerUps();
+    void initializeObstacels();
+    void initializeCoins();
     bool validateNextPos(int x, int y, int curX, int curY);
     bool validateStartPos(int x, int y);
     void ManageScore(char object);

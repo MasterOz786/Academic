@@ -129,10 +129,10 @@ public:
         return this->id != vertex.id;
     }
 
-    bool operator>(Vertex &vertex)
+    bool operator>(Vertex& vertex)
     {
         return this->distanceFromSource > vertex.distanceFromSource;
-    }
+    }    
 
     friend std::ostream &operator<<(std::ostream &out, Vertex &vertex);
 };

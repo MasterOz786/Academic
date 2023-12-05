@@ -56,6 +56,13 @@
     "xlocmes": "cpp",
     "xlocmon": "cpp",
     "xloctime": "cpp",
-    "vector": "cpp"
+    "vector": "cpp",
+    "chrono": "cpp",
+    "forward_list": "cpp",
+    "iomanip": "cpp",
+    "mutex": "cpp",
+    "ratio": "cpp",
+    "stop_token": "cpp",
+    "thread": "cpp"
   }
 }

@@ -6,7 +6,12 @@ Heap::Heap(int capacity)
 {
     this->capacity = capacity;
     this->size = 0;
-    this->arr = new int[capacity];
+    this->arr = new PlayerData[capacity];
+}
+
+bool Heap::isEmpty()
+{
+    return size == 0;
 }
 
 int Heap::parent(int i)
@@ -24,12 +29,12 @@ int Heap::right(int i)
     return (2 * i + 2);
 }
 
-int Heap::getMax()
+PlayerData Heap::getMax()
 {
     return arr[0];
 }
 
-void Heap::insert(int k)
+void Heap::insert(PlayerData k)
 {
     if (size == capacity)
     {
@@ -41,7 +46,7 @@ void Heap::insert(int k)
     int i = size - 1;
     arr[i] = k;
 
-    while (i != 0 && arr[parent(i)] < arr[i])
+    while (i != 0 && arr[parent(i)].score < arr[i].score)
     {
         std::swap(arr[i], arr[parent(i)]);
         i = parent(i);
@@ -54,10 +59,10 @@ void Heap::heapify(int i)
     int r = right(i);
     int largest = i;
 
-    if (l < size && arr[l] > arr[i])
+    if (l < size && arr[l].score > arr[i].score)
         largest = l;
 
-    if (r < size && arr[r] > arr[largest])
+    if (r < size && arr[r].score > arr[largest].score)
         largest = r;
 
     if (largest != i)
@@ -67,10 +72,10 @@ void Heap::heapify(int i)
     }
 }
 
-int Heap::extractMax()
+PlayerData Heap::extractMax()
 {
     if (size <= 0)
-        return INT_MIN;
+        return PlayerData("NULL", INT_MAX);
 
     if (size == 1)
     {
@@ -78,7 +83,7 @@ int Heap::extractMax()
         return arr[0];
     }
 
-    int root = arr[0];
+    PlayerData root = arr[0];
     arr[0] = arr[size - 1];
     size--;
     heapify(0);
@@ -86,10 +91,10 @@ int Heap::extractMax()
     return root;
 }
 
-void Heap::decreaseKey(int i, int new_val)
+void Heap::decreaseKey(int i, PlayerData new_val)
 {
     arr[i] = new_val;
-    while (i != 0 && arr[parent(i)] < arr[i])
+    while (i != 0 && arr[parent(i)].score < arr[i].score)
     {
         std::swap(arr[i], arr[parent(i)]);
         i = parent(i);
@@ -98,14 +103,14 @@ void Heap::decreaseKey(int i, int new_val)
 
 void Heap::deleteKey(int i)
 {
-    decreaseKey(i, INT_MAX);
+    decreaseKey(i, PlayerData("NULL", INT_MAX));
     extractMax();
 }
 
 void Heap::print()
 {
     for (int i = 0; i < size; i++)
-        std::cout << arr[i] << " ";
+        std::cout << arr[i].name << ' ' << arr[i].score << " ";
     std::cout << std::endl;
 }
 
