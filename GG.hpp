@@ -1,6 +1,7 @@
 
 #pragma once
 #include "LL.hpp"
+#include "Player.hpp"
 
 struct Grid
 {
@@ -26,6 +27,7 @@ private:
     int vertices;
     Grid grid;
     LL<Vertex> adj_list;
+    Player player;
 
     int* dijkstra(int source, int dest);
     void CreateMatrix(int rows, int cols);
@@ -35,6 +37,7 @@ private:
 
     bool validateNextPos(int x, int y, int curX, int curY);
     bool validateStartPos(int x, int y);
+    void ManageScore(char object);
 
     void storeCurrentProgress();
     void restoreCurrentProgress();

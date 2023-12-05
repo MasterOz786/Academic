@@ -2,12 +2,13 @@
 #include <iostream>
 #include <fstream>
 #include <algorithm>
-#include<sstream>
+#include <sstream>
 #include <ctime>
 #include <conio.h>
-#include "GG.hpp"
-#include "Queue.hpp"
 #include <Windows.h>
+
+#include "Queue.hpp"
+#include "GG.hpp"
 
 // Graph class implementation
 template <typename T>
@@ -56,7 +57,7 @@ bool GG<T>::validateNextPos(int x, int y, int curX, int curY)
         std::cout << "Invalid position\n";
         return false;
     }
-    
+
     else if (x > curX + 1 || x < curX - 1 || y > curY + 1 || y < curY - 1)
     {
         std::cout << "Error: Jitni chaadar dekhain utney paaon phelain!\n";
@@ -76,6 +77,25 @@ bool GG<T>::validateNextPos(int x, int y, int curX, int curY)
         return false;
     }
     return true;
+}
+
+template <typename T>
+void GG<T>::ManageScore(char object)
+{
+    if (object == 'c')
+    {
+        this->player.UpdateScore(10);
+    }
+    // increment from 1.2 --> 1.5 --> 1.8 --> 2.0 --> 2.5 --> 3.0 and +5 till infinity
+    else if (object == 'P')
+    {
+        if (this->player.GetCurrentMultiplier() == 1.0) this->player.UpdateMultiplier(1.2);
+        else if (this->player.GetCurrentMultiplier() == 1.2) this->player.UpdateMultiplier(1.5);
+        else if (this->player.GetCurrentMultiplier() == 1.5) this->player.UpdateMultiplier(1.8);
+        else if (this->player.GetCurrentMultiplier() == 1.8) this->player.UpdateMultiplier(2.0);
+        // increment the multipliers by 0.5 once its greater or equal to 2.0
+        else this->player.UpdateMultiplier(this->player.GetCurrentMultiplier() + 0.5);
+    }
 }
 
 template <typename T>
@@ -125,20 +145,129 @@ void GG<T>::GenerateRandomGraph()
     for (int i = 0; i < this->grid.rows; i++)
         for (int j = 0; j < this->grid.cols; j++)
         {
-            // generate obstacles
+            // generate free spaces/no-go areas
             if (rand() % 7 == 0)
             {
                 int weight = ' ';
                 this->grid.indexes[i][j] = weight;
-                this->adj_list.insertUnique(Vertex((i * this->grid.cols) + j, weight));
+                this->adj_list.insertAtEnd(Vertex((i * this->grid.cols) + j, weight));
+            }
+
+            // generate power-ups
+            else if (rand() % 14 == 10)
+            {
+                int weight = 'P';
+                // make sure the power ups aren't placed nearby each other and make it memory safe
+                if (
+                    (i > 0 && this->grid.indexes[i - 1][j] != weight) &&
+                    (i < this->grid.cols - 1 && this->grid.indexes[i + 1][j] != weight) &&
+                    (j > 0 && this->grid.indexes[i][j - 1] != weight) &&
+                    (j < this->grid.cols - 1 && this->grid.indexes[i][j + 1] != weight))
+                {
+                    this->grid.indexes[i][j] = weight;
+                    this->adj_list.insertAtEnd(Vertex((i * this->grid.cols) + j, weight));
+                }
+
+                // just place a blank weight
+                else
+                {
+                    weight = ' ';
+                    this->grid.indexes[i][j] = weight;
+                    this->adj_list.insertAtEnd(Vertex((i * this->grid.cols) + j, weight));
+                }
+            }
+
+            // generate coins
+            else if (rand() % 5 == 1)
+            {
+                int weight = 'c';
+                // make sure the coins aren't placed nearby each other and make it memory safe
+                if (
+                    (i > 0 && this->grid.indexes[i - 1][j] != weight) &&
+                    (i < this->grid.cols - 1 && this->grid.indexes[i + 1][j] != weight) &&
+                    (j > 0 && this->grid.indexes[i][j - 1] != weight) &&
+                    (j < this->grid.cols - 1 && this->grid.indexes[i][j + 1] != weight)
+                ) {
+                    this->grid.indexes[i][j] = weight;
+                    this->adj_list.insertAtEnd(Vertex((i * this->grid.cols) + j, weight));
+                }
+
+                // just place a blank weight
+                else
+                {
+                    weight = ' ';
+                    this->grid.indexes[i][j] = weight;
+                    this->adj_list.insertAtEnd(Vertex((i * this->grid.cols) + j, weight));
+                }
             }
             else
             {
                 int weight = '+';
+                // make sure that there are path vertices nearby
                 this->grid.indexes[i][j] = weight;
-                this->adj_list.insertUnique(Vertex((i * this->grid.cols) + j, weight));
+                this->adj_list.insertAtEnd(Vertex((i * this->grid.cols) + j, weight));
             }
         }
+}
+
+template <typename T>
+void GG<T>::MakeConnections()
+{
+    // making connections
+    Node<Vertex> *temp = this->adj_list.head;
+    for (int i = 0; temp != nullptr; i++)
+    {
+        int source = temp->data.GetID();
+        int weight = temp->data.GetType();
+
+        if (temp->data.GetType() != ' ')
+        {
+            // make connections on the right
+            if (source % grid.cols < grid.cols - 1 && source + 1 < this->vertices)
+            {
+                Node<Vertex> *vNode = adj_list.searchNode(source + 1);
+                if (vNode->data.GetType() != ' ')
+                {
+                    weight = vNode->data.GetType();
+                    temp->data.AddEdge(Edge(source, source + 1, weight));
+                }
+            }
+
+            // make connections on the left
+            if (source % grid.cols > 0 && source - 1 >= 0)
+            {
+                Node<Vertex> *vNode = adj_list.searchNode(source - 1);
+                if (vNode->data.GetType() != ' ')
+                {
+                    weight = vNode->data.GetType();
+                    temp->data.AddEdge(Edge(source, source - 1, weight));
+                }
+            }
+
+            // make connections on the top
+            if (source >= grid.cols)
+            {
+                Node<Vertex> *vNode = adj_list.searchNode(source - grid.cols);
+                if (vNode->data.GetType() != ' ')
+                {
+                    weight = vNode->data.GetType();
+                    temp->data.AddEdge(Edge(source, source - grid.cols, weight));
+                }
+            }
+
+            // make connections on the bottom
+            if (source < this->vertices - grid.cols && source + grid.cols < this->vertices)
+            {
+                Node<Vertex> *vNode = adj_list.searchNode(source + grid.cols);
+                if (vNode->data.GetType() != ' ')
+                {
+                    weight = vNode->data.GetType();
+                    temp->data.AddEdge(Edge(source, source + grid.cols, weight));
+                }
+            }
+        }
+        temp = temp->next;
+    }
 }
 
 template <typename T>
@@ -152,8 +281,14 @@ void GG<T>::Print()
     {
         for (int j = 0; j < grid.cols; j++)
         {
+            // if the vertex has edges i.e. it isn't a free space/obstacle
             if (adj_list.searchNode((i * grid.cols) + j)->data.getNeighbours().head)
                 SetConsoleTextAttribute(hConsole, FOREGROUND_BLUE);
+
+            if (grid.indexes[i][j] == 'C' || grid.indexes[i][j] == 'D')
+            {
+                SetConsoleTextAttribute(hConsole, FOREGROUND_RED);
+            }
             std::cout << grid.indexes[i][j];
             // printing horizontal edges
             if (j < grid.cols - 1)
@@ -208,67 +343,10 @@ void GG<T>::Print()
         }
         std::cout << '\n';
     }
+    SetConsoleTextAttribute(hConsole, FOREGROUND_INTENSITY);
+    std::cout << "Score: " << this->player.GetCurrentScore() << "\n\n";
+    // reset the colors to white
     SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
-}
-
-template <typename T>
-void GG<T>::MakeConnections()
-{
-    // making connections
-    Node<Vertex> *temp = this->adj_list.head;
-    for (int i = 0; temp != nullptr; i++)
-    {
-        int source = temp->data.GetID();
-        int weight = '+';
-
-        if (temp->data.GetType() != ' ')
-        {
-            // make connections on the right
-            if (source % grid.cols < grid.cols - 1 && source + 1 < this->vertices)
-            {
-                Node<Vertex> *vNode = adj_list.searchNode(source + 1);
-                if (vNode->data.GetType() != ' ')
-                {
-                    weight = vNode->data.GetType();
-                    temp->data.AddEdge(Edge(source, source + 1, weight));
-                }
-            }
-
-            // make connections on the left
-            if (source % grid.cols > 0 && source - 1 >= 0)
-            {
-                Node<Vertex> *vNode = adj_list.searchNode(source - 1);
-                if (vNode->data.GetType() != ' ')
-                {
-                    weight = vNode->data.GetType();
-                    temp->data.AddEdge(Edge(source, source - 1, weight));
-                }
-            }
-
-            // make connections on the top
-            if (source >= grid.cols)
-            {
-                Node<Vertex> *vNode = adj_list.searchNode(source - grid.cols);
-                if (vNode->data.GetType() != ' ')
-                {
-                    weight = vNode->data.GetType();
-                    temp->data.AddEdge(Edge(source, source - grid.cols, weight));
-                }
-            }
-
-            // make connections on the bottom
-            if (source < this->vertices - grid.cols && source + grid.cols < this->vertices)
-            {
-                Node<Vertex> *vNode = adj_list.searchNode(source + grid.cols);
-                if (vNode->data.GetType() != ' ')
-                {
-                    weight = vNode->data.GetType();
-                    temp->data.AddEdge(Edge(source, source + grid.cols, weight));
-                }
-            }
-        }
-        temp = temp->next;
-    }
 }
 
 // Dijkstra Algorithim for finding shortest path from source to dest
@@ -329,17 +407,17 @@ int *GG<T>::dijkstra(int source, int dest)
         }
     }
 
-    // printing the path
-    int cur = dest;
-    while (cur != -1)
-    {
-        SetConsoleTextAttribute(hConsole, FOREGROUND_RED);
-        std::cout << cur;
-        // remove the ending/trailing arrow
-        if (cur != source)
-            std::cout << " <- ";
-        cur = parent[cur];
-    }
+    // // printing the path
+    // int cur = dest;
+    // while (cur != -1)
+    // {
+    //     SetConsoleTextAttribute(hConsole, FOREGROUND_RED);
+    //     std::cout << cur;
+    //     // remove the ending/trailing arrow
+    //     if (cur != source)
+    //         std::cout << " <- ";
+    //     cur = parent[cur];
+    // }
     SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
 
     // store the shortest path
@@ -390,10 +468,24 @@ void GG<T>::SimulateAutoCarMovement(int source, int dest)
         y = index % this->grid.cols;
 
         // printing the grid with delays and updating the car positon
+        ManageScore(this->grid.indexes[x][y]);
         this->grid.indexes[x][y] = 'C';
-        i == 0 ? Sleep(5000) : Sleep(500);
-        system("cls");
-        Print();
+
+        if (i > 0)
+        {
+            Print();
+            Sleep(700);
+            system("cls");
+        }
+        // if the destination is reached
+        else
+        {
+            HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+            SetConsoleTextAttribute(hConsole, FOREGROUND_BLUE);
+            Print();
+            std::cout << "\nAutocompletion Successful!\n";
+            Sleep(5000);
+        }
 
         // updating counters
         i--;
@@ -420,69 +512,61 @@ void GG<T>::SimulatePlayerCarMovement(int source, int dest)
     while (sourceX != destX || sourceY != destY)
     {
         Print();
- 
+
         char ch;
-
         std::cout << "Press arrow keys to move your car on path\n";
-        std::cout << "Save and Quit? (y)\n";
-        // std::cin >> x >> y;
-            ch = _getch(); // Read the actual key code
-            switch(ch) {
-                case 72:   // For up arrow key
-
-                        sourceX -= 1;
-                    
-                    break;
-                case 80:   // For down key
-
-                        sourceX += 1;
-                    
-                    break;
-                case 75:   // For left arrow key
-                        sourceY -= 1;
-                    
-                    break;
-                case 77:  // For right arrow key
-    
-                        sourceY += 1;
-                    
-                    break;
-                    case 'y':
-                        storeCurrentProgress();
-                        return;
-                        break;
-                default:
-                    break;
-            }
-    
-
-        
+        std::cout << "Quit? (y)\n";
+        ch = _getch(); // Read the actual key code
+        switch (ch)
+        {
+        case 72: // For up arrow key
+            sourceX -= 1;
+            break;
+        case 80: // For down key
+            sourceX += 1;
+            break;
+        case 75: // For left arrow key
+            sourceY -= 1;
+            break;
+        case 77: // For right arrow key
+            sourceY += 1;
+            break;
+        case 'y':
+            storeCurrentProgress();
+        default:
+            break;
+        }
 
         if (validateNextPos(sourceX, sourceY, curX, curY) == false)
         {
             sourceX = curX;
-            sourceY = curY ;
-            HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
-            SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
-
-            //continue;
+            sourceY = curY;
         }
 
-            this->grid.indexes[sourceX][sourceY] = 'C';
+        // Check and update the score
+        ManageScore(this->grid.indexes[sourceX][sourceY]);
 
-        if(sourceX != curX || sourceY != curY)
+        // update the position of the car on the grid
+        this->grid.indexes[sourceX][sourceY] = 'C';
+        if (sourceX != curX || sourceY != curY)
+        {
             this->grid.indexes[curX][curY] = '+';
+        }
         curX = sourceX, curY = sourceY;
 
-
-        
-
+        // clear and show the result grid
         system("cls");
         Print();
-        // CHeck9ng the carv has reach the detination or not
-        if(sourceX == destX && sourceY == destY){
-            std::cout << "HURRAH, You have won the game!" << std::endl;
-         }
+
+        // checking if the car has reached the destination or not
+        if (sourceX == destX && sourceY == destY)
+        {
+            HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+            SetConsoleTextAttribute(hConsole, FOREGROUND_BLUE);
+            std::cout << "\nHURRAH, You have won the game!\n";
+            Sleep(5000);
+            break;
+        }
     }
 }
 
@@ -508,14 +592,16 @@ void GG<T>::storeCurrentProgress()
     for (int i = 0; i < this->grid.rows * this->grid.cols; i++)
     {
         file << temp->data.GetID();
-        if(temp->data.getNeighbours().head != nullptr){
+        if (temp->data.getNeighbours().head != nullptr)
+        {
             file << " ";
         }
         Node<Edge> *temp2 = temp->data.getNeighbours().head;
         while (temp2 != nullptr)
         {
             file << temp2->data.dest;
-            if(temp2->next != nullptr){
+            if (temp2->next != nullptr)
+            {
                 file << " ";
             }
             temp2 = temp2->next;
@@ -560,8 +646,7 @@ void GG<T>::restoreCurrentProgress()
         }
     }
 
-    
-    std::getline(file, line);  // Skipping a line
+    std::getline(file, line); // Skipping a line
 
     std::getline(file, line);
 
@@ -574,30 +659,28 @@ void GG<T>::restoreCurrentProgress()
     // first integer is the vertex, rest are the edges
     while (file)
     {
-    
+
         std::stringstream ss(line);
         int vertex;
         ss >> vertex;
-        this->adj_list.insertAtEnd(vertex);  // Inserting vertix in adjacency list
+        this->adj_list.insertAtEnd(vertex); // Inserting vertix in adjacency list
         int edge;
         bool inserted = false;
         while (ss >> edge)
         {
             bool inserted = true;
             this->adj_list.searchNode(vertex)->data.AddEdge(Edge(vertex, edge, '+')); // Inserting edge
-
-
         }
-        if(!inserted){
+        if (!inserted)
+        {
             this->adj_list.searchNode(vertex)->data.setType(' ');
         }
         std::getline(file, line);
-        
     }
 
     file.close();
 
-    SimulatePlayerCarMovement(source, dest) ;
+    SimulatePlayerCarMovement(source, dest);
 }
 
 template <typename T>
