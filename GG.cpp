@@ -15,7 +15,17 @@
 template <typename T>
 GG<T>::GG()
 {
-    this->vertices = 0;
+    srand(time(0));
+
+    int rand = std::rand() % 10 + 4;
+    this->grid.rows = rand;
+    this->grid.cols = rand;
+    this->vertices = this->grid.rows * this->grid.cols;
+
+    initializePowerUps();
+    initializeObstacels();
+    initializeCoins();
+    CreateMatrix(this->grid.rows, this->grid.cols);
 }
 
 template <typename T>
@@ -939,6 +949,9 @@ void GG<T>::StartMenu()
                     std::cout << "Records updated with the name " << this->player.GetName() << " having a score of " << this->player.GetCurrentScore() << "!\n\n";
                     Sleep(2000);
                 }
+                
+                this->player.UpdateScore(0);
+                this->player.UpdateMultiplier(1);
             }
             else if (choice == "2")
             {
@@ -956,6 +969,8 @@ void GG<T>::StartMenu()
                     std::cout << "Records updated with the name " << this->player.GetName() << " having a score of " << this->player.GetCurrentScore() << "!\n\n";
                     Sleep(2000);
                 }
+                this->player.UpdateScore(0);
+                this->player.UpdateMultiplier(1);
             }
             else
             {
@@ -986,6 +1001,8 @@ void GG<T>::StartMenu()
             std::cout << "Invalid choice!\n";
         }
 
+        this->player.UpdateScore(0);
+        this->player.UpdateMultiplier(1);
         FreeMatrix();
         StartMenu();
     }

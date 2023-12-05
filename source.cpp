@@ -8,7 +8,7 @@ using namespace std;
 
 int main()
 {
-    GG<int> g(10, 10);
+    GG<int> g;
     g.StartMenu();
     
     return 0;
