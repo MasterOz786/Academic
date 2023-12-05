@@ -775,7 +775,6 @@ void GG<T>::storeCurrentProgress()
 template <typename T>
 void GG<T>::restoreCurrentProgress()
 {
-
     delete this->adj_list.head;
     this->adj_list.head = nullptr;
     this->adj_list.printList();
@@ -873,6 +872,7 @@ void GG<T>::ShowLeaderboards()
 template <typename T>
 void GG<T>::StartMenu()
 {
+    static bool first_time = false;
     HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
     CreateMatrix(this->grid.rows, this->grid.cols);
     std::string name;
@@ -882,11 +882,17 @@ void GG<T>::StartMenu()
     std::cout << "\n\nWelcome to Shurli - A 2D Car Race Game!!\n\n";
     Sleep(2000);
 
-    SetConsoleTextAttribute(hConsole, FOREGROUND_BLUE);
-    std::cout << "Your good name? ";
-    std::getline(std::cin, name);
-    this->player.SetName(name);
+    if (first_time == false)
+    {
+        SetConsoleTextAttribute(hConsole, FOREGROUND_BLUE);
+        std::cout << "Your good name? ";
+        std::getline(std::cin, name);
+        this->player.SetName(name);
 
+        first_time = true;
+    }
+
+    
     Sleep(2000);
     SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_BLUE | FOREGROUND_GREEN);
     std::string choice;
@@ -962,11 +968,31 @@ void GG<T>::StartMenu()
     else if (choice == "3")
     {
         restoreCurrentProgress();
-    }
+        std::cin.ignore();
 
+        std::string choice;
+        std::cout << "Want to save the records? ";
+        std::getline(std::cin, choice);
+
+        if (choice == "Y" || choice == "y")
+        {
+            UpdateRecords();
+
+            std::cout << "Records updated with the name " << this->player.GetName() << " having a score of " << this->player.GetCurrentScore() << "!\n\n";
+            Sleep(2000);
+        }
+        else
+        {
+            std::cout << "Invalid choice!\n";
+        }
+
+        FreeMatrix();
+        StartMenu();
+    }
     else if (choice == "4")
     {
         ShowLeaderboards();
+        FreeMatrix();
         StartMenu();
     }
     else if (choice == "5")
