@@ -1,2 +1,18 @@
 
 SDL2-Game/
+
+# all .exe files
+*.exe
+
+# all .zip files
+*.zip
+
+# some other files
+DS Project.docx
+DS Project.pdf
+
+# generated files
+Leaderboard.txt
+progress.txt
+
+
