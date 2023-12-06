@@ -17,7 +17,7 @@ GG<T>::GG()
 {
     srand(time(0));
 
-    int rand = std::rand() % 10 + 4;
+    int rand = std::rand() % 5 + 10;
     this->grid.rows = rand;
     this->grid.cols = rand;
     this->vertices = this->grid.rows * this->grid.cols;
@@ -42,27 +42,22 @@ GG<T>::GG(int r, int c)
 }
 
 template <typename T>
-bool GG<T>::validateStartPos(int x, int y)
+bool GG<T>::validateStartPos(int sourceX, int sourceY, int destX, int destY)
 {
     HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
     SetConsoleTextAttribute(hConsole, FOREGROUND_RED);
 
-    x = x % this->grid.cols;
-    y = y % this->grid.cols;
-
-    if (x < 0 || x >= this->grid.rows || y < 0 || y >= this->grid.cols)
+    if (sourceX < 0 || sourceX >= this->grid.rows || sourceY < 0 || sourceY >= this->grid.cols)
     {
-        std::cout << x << ' ' << y << '\n';
         std::cout << "Aukaatoo baahr!\n";
         return false;
     }
-    else if (this->grid.indexes[x][y] == ' ')
+    else if (this->grid.indexes[sourceX][sourceY] == ' ' || this->grid.indexes[destX][destY] == ' ')
     {
-        std::cout << x << ' ' << y << '\n';
         std::cout << "Obstacle touunn ni start honna, kumm aali jaga toun gaddi nou sulf maaro ni te rehn deo..\n";
         return false;
     }
-    else if (this->grid.indexes[x][y] != '+')
+    else if (this->grid.indexes[sourceX][sourceY] != '+')
     {
         std::cout << "Galat jagah taang aur gaari ni khari krteyy betaaaaa!!\n";
         return false;
@@ -255,7 +250,8 @@ void GG<T>::GenerateRandomGraph()
                     (i > 0 && this->grid.indexes[i - 1][j] != weight) &&
                     (i < this->grid.cols - 1 && this->grid.indexes[i + 1][j] != weight) &&
                     (j > 0 && this->grid.indexes[i][j - 1] != weight) &&
-                    (j < this->grid.cols - 1 && this->grid.indexes[i][j + 1] != weight))
+                    (j < this->grid.cols - 1 && this->grid.indexes[i][j + 1] != weight)
+                )
                 {
                     this->grid.indexes[i][j] = weight;
                     this->adj_list.insertAtEnd(Vertex((i * this->grid.cols) + j, weight));
@@ -408,6 +404,26 @@ void GG<T>::Print()
             {
                 SetConsoleTextAttribute(hConsole, FOREGROUND_RED);
             }
+            else if (grid.indexes[i][j] == '$')
+            {
+                SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_GREEN);
+            }
+            else if (grid.indexes[i][j] == '*')
+            {
+                SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_INTENSITY);
+            }
+            else if (grid.indexes[i][j] == '#')
+            {
+                SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_INTENSITY);
+            }
+            else if (grid.indexes[i][j] == ' ')
+            {
+                SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+            }
+            else
+            {
+                SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE | FOREGROUND_INTENSITY);
+            }   
             std::cout << grid.indexes[i][j];
             // printing horizontal edges
             if (j < grid.cols - 1)
@@ -510,7 +526,6 @@ int *GG<T>::Djisktra(int source, int dest)
         Vertex u = pq.showFront();
         pq.dequeue();
         visited[u.GetID()] = true;
-
         Node<Edge> *temp = u.getNeighbours().head;
         while (temp != nullptr)
         {
@@ -529,16 +544,16 @@ int *GG<T>::Djisktra(int source, int dest)
     }
 
     // // printing the path
-    // int cur = dest;
-    // while (cur != -1)
-    // {
-    //     SetConsoleTextAttribute(hConsole, FOREGROUND_RED);
-    //     std::cout << cur;
-    //     // remove the ending/trailing arrow
-    //     if (cur != source)
-    //         std::cout << " <- ";
-    //     cur = parent[cur];
-    // }
+    int cur = dest;
+    while (cur != -1)
+    {
+        SetConsoleTextAttribute(hConsole, FOREGROUND_RED);
+        std::cout << cur;
+        // remove the ending/trailing arrow
+        if (cur != source)
+            std::cout << " <- ";
+        cur = parent[cur];
+    }
     SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
 
     // store the shortest path
@@ -551,6 +566,7 @@ void GG<T>::SimulateAutoCarMovement(int source, int dest)
 {
     int *parent = new int[this->vertices];
     parent = Djisktra(source, dest);
+
     // reversing the path array
     int *path = new int[this->vertices];
     int i = 0;
@@ -888,12 +904,11 @@ void GG<T>::StartMenu()
     std::string name;
     SetConsoleTextAttribute(hConsole, FOREGROUND_RED);
 
-    Sleep(1000);
-    std::cout << "\n\nWelcome to Shurli - A 2D Car Race Game!!\n\n";
-    Sleep(2000);
-
+    
     if (first_time == false)
     {
+        std::cout << "\n\nWelcome to Shurli - A 2D Car Race Game!!\n\n";
+        Sleep(1000);
         SetConsoleTextAttribute(hConsole, FOREGROUND_BLUE);
         std::cout << "Your good name? ";
         std::getline(std::cin, name);
@@ -903,7 +918,7 @@ void GG<T>::StartMenu()
     }
 
     
-    Sleep(2000);
+    Sleep(1500);
     SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_BLUE | FOREGROUND_GREEN);
     std::string choice;
     std::cout << "\n\nWhat do you want to do?\n"
@@ -921,7 +936,7 @@ void GG<T>::StartMenu()
 
         Sleep(1000);
         Print();
-        Sleep(2000);
+        Sleep(1000);
 
         std::cout << "Enter the start index: ";
         std::cin >> sx >> sy;
@@ -931,7 +946,7 @@ void GG<T>::StartMenu()
         int source = (sx * this->grid.cols) + sy;
         int dest = (ex * this->grid.cols) + ey;
 
-        if (validateStartPos(source, dest) == true)
+        if (validateStartPos(sx, sy, ex, ey) == true)
         {
             if (choice == "1")
             {

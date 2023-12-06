@@ -44,7 +44,7 @@ private:
     void initializeObstacels();
     void initializeCoins();
     bool validateNextPos(int x, int y, int curX, int curY);
-    bool validateStartPos(int x, int y);
+    bool validateStartPos(int sourceX, int sourceY, int destX, int destY);
     void ManageScore(char object);
     void SortLeaderboards();
     void UpdateRecords();
