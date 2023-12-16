@@ -1,13 +1,13 @@
 
 # Introduction
 
-A 2D game made using C++ utilizing OOP. A basic implementation of Graphs, Adjacency Lists and relevant algorithms such as Djisktra.
+A 2D game made using C++ utilizing OOP. A basic implementation of graphs, adjacency lists and relevant algorithms such as Djisktra.
 
 ## Build Instructions
 
 After cloning, compile the code using the following commands
 
-### Windows
+### Windows (Powershell)
 
 g++ source.cpp -o m; ./m;
 
